@@ -1,5 +1,38 @@
 #! /bin/bash
 
+case $1 in
+	'install' )
+		if [[ $# -ne 1 ]]; then
+			echo "incorrect usage"
+			echo "USAGE: ./code-review.sh install"
+			exit 1
+		fi
+		HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+		if [[ -f "$HOME/.bashrc" ]]; then
+			echo '"PATH=\$PATH:$HERE"' >> "$HOME/.bashrc"
+			echo "added this script to ~/.bashrc"
+			source "$HOME/.bashrc"
+		fi
+		if [[ -f "$HOME/.tchsrc" ]]; then
+			echo 'setenv PATH "\${PATH}:$HERE"' >> "$HOME/.tchsrc"
+			echo "added this script to ~/.tchsrc"
+			source "$HOME/.tcshrc"
+		fi
+		exit 0
+		;;
+	'update' )
+		if [[ $# -ne 1 ]]; then
+			echo "incorrect usage"
+			echo "USAGE: ./code-review.sh update"
+			exit 1
+		fi
+		cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" &&
+		git pull &&		
+		exit 0
+		;;
+esac
+
+
 REPONAME="$(basename -s .git `git config --get remote.origin.url`)"
 if [[ "$(git config --get remote.origin.url)" != "git@"* ]]; then
 	PREFIX="https://github.com/"
@@ -20,35 +53,6 @@ require_clean(){
 
 
 case $1 in
-	'install' )
-		if [[ $# -ne 1 ]]; then
-			echo "incorrect usage"
-			echo "USAGE: ./code-review.sh install"
-			exit 1
-		fi
-		HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-		if [[ -f "$HOME/.bashrc" ]]; then
-			echo '"PATH=\$PATH:$HERE"' >> "$HOME/.bashrc"
-			echo "added this script to ~/.bashrc"
-			source ~/bashrc
-		fi
-		if [[ -f "$HOME/.tchsrc" ]]; then
-			echo 'setenv PATH "\${PATH}:$HERE"' >> "$HOME/.tchsrc"
-			echo "added this script to ~/.tchsrc"
-			source ~/.tcshrc
-		fi
-		exit 0
-		;;
-	'update' )
-		if [[ $# -ne 1 ]]; then
-			echo "incorrect usage"
-			echo "USAGE: ./code-review.sh update"
-			exit 1
-		fi
-		cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" &&
-		git pull &&		
-		exit 0
-		;;
 	'first-time-setup' )
 		if [[ $# -ne 2 ]]; then
 			echo "incorrect usage"
