@@ -28,12 +28,14 @@ case $1 in
 		fi
 		HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 		if [[ -f "$HOME/.bashrc" ]]; then
-			echo "$PATH=$PATH:$HERE" >> "$HOME/.bashrc"
+			echo '"PATH=\$PATH:$HERE"' >> "$HOME/.bashrc"
 			echo "added this script to ~/.bashrc"
+			source ~/bashrc
 		fi
 		if [[ -f "$HOME/.tchsrc" ]]; then
-			echo "setenv PATH ${PATH}:$HERE" >> "$HOME/.tchsrc"
+			echo 'setenv PATH "\${PATH}:$HERE"' >> "$HOME/.tchsrc"
 			echo "added this script to ~/.tchsrc"
+			source ~/.tcshrc
 		fi
 		exit 0
 		;;
