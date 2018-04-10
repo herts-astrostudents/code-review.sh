@@ -155,7 +155,7 @@ case $1 in
 		exit 0
 		;;
 	'pull-tasks' )
-		if [[ $# -ne 2 ]]; then
+		if [[ $# -ne 1 ]]; then
 			echo "incorrect usage"
 			echo "USAGE: code-review.sh pull-tasks"
 			exit 1
@@ -205,7 +205,7 @@ case $1 in
 			echo "USAGE: code-review.sh update-task <TASK-NAME>"
 			exit 1
 		fi
-		read -p "This will pull any changes from the remote repository. Continue? [enter]"
+		read -p "This will pull any changes from the remote repository and merge them with your current work on Task $2. Continue? [enter]"
 		require_clean &&
 		cd "$TOPLEVEL" &&
 		(git rebase master "$2-solution" &&
