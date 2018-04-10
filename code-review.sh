@@ -229,6 +229,8 @@ case $1 in
 				git add --all && git commit -m "merged task" &&
 				git checkout solutions-develop &&
 				git merge "task-$3/solution" -m "merged solution" &&
+				git branch -D "task-$3/task" &&
+				git branch -D "task-$3/solution" &&
 				git checkout master &&
 				echo "Summary" &&
 				echo "=======" &&
