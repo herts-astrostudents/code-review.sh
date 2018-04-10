@@ -39,7 +39,7 @@ if [[ $DIFF -gt "$((60*60*$FREQ))" ]]; then
 	if [[ STATUS  -gt 0 ]]; then
 		echo "This repository ($where) is out-of-date to receive upstream changes"
 		echo "Run code-review.sh pull-tasks to get the latest update"
-		echo "Run code-review.sh update-task <TASK-NAME> to update the task you are working on with the new task"
+		echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on with the new task"
 	fi
 	echo "next check in $FREQ hours"
 fi
@@ -166,6 +166,7 @@ case $1 in
 		git checkout master && 
 		git merge upstream/master &&
 		git checkout $CURRENT_BRANCH &&
+		echo "run code-review.sh update-task <TASK-NAME> if you need to."
 		exit 0
 		;;
 	'start-task' )
