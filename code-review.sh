@@ -1,5 +1,49 @@
 #! /bin/bash
 
+SCRIPTLOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+check_for_changes(){
+	git fetch $1 || (echo "fetch failed" && exit 1)
+	UPSTREAM="$1/$2"
+	LOCAL=$(git rev-parse $2)
+	REMOTE=$(git rev-parse "$UPSTREAM")
+	BASE=$(git merge-base @{0} "$UPSTREAM")
+
+	if [ $LOCAL = $REMOTE ]; then
+	    return 0
+	elif [ $LOCAL = $BASE ]; then
+	    return 1
+	else
+		return 2
+	fi
+}
+
+if [[ -f "$SCRIPTLOCATION/last-checked" ]]; then
+	LASTCHECKDATE="$(cat $SCRIPTLOCATION/last-checked)"
+	NOW=$(date +%s)
+	DIFF=$(( $NOW - $LASTCHECKDATE ))
+fi
+
+FREQ=12
+if [[ $DIFF -gt "$((60*60*$FREQ))" ]]; then
+	echo "checking for updates..."
+	where="$(pwd)"
+	cd $SCRIPTLOCATION && STATUS="$(check_for_changes origin master)" && (
+	if [[ STATUS -gt 0 ]]; then
+		echo "code-review.sh is out-of-date please run code-review.sh update"
+	fi
+	)
+	cd $where
+	echo $(date +%s) > "$SCRIPTLOCATION/last-checked"
+	STATUS="$(check_for_changes upstream master)"
+	if [[ STATUS  -gt 0 ]]; then
+		echo "This repository ($where) is out-of-date to receive upstream changes"
+		echo "Run code-review.sh pull-tasks to get the latest update"
+		echo "Run code-review.sh update-task <TASK-NAME> to update the task you are working on with the new task"
+	fi
+	echo "next check in $FREQ hours"
+fi
+
 case $1 in
 	'install' )
 		if [[ $# -ne 1 ]]; then
@@ -25,8 +69,10 @@ case $1 in
 			echo "USAGE: code-review.sh update"
 			exit 1
 		fi
-		cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" &&
-		git pull &&		
+		cd $SCRIPTLOCATION &&
+		git checkout master &&
+		git fetch --all &&
+		git reset --hard origin/master &&
 		exit 0
 		;;
 esac
@@ -51,6 +97,8 @@ require_clean(){
 		exit 1
 	fi
 }
+
+
 
 
 case $1 in
@@ -160,11 +208,7 @@ case $1 in
 		read -p "This will pull any changes from the remote repository. Continue? [enter]"
 		require_clean &&
 		cd "$TOPLEVEL" &&
-		(git checkout "$2-solution" && 
-		git fetch upstream && 
-		git checkout master && 
-		git merge upstream/master &&
-		git rebase master "$2-solution" &&
+		(git rebase master "$2-solution" &&
 		git checkout "$CURRENT_BRANCH" &&
 		echo "Update succeeded, continue as you were. You may notice some changes from upstream!") || (echo "update failed...") &&
 		exit 0
