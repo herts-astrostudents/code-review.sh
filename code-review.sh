@@ -193,12 +193,12 @@ case $1 in
 		require_clean &&
 		ORIGINNAME="$(git config --get remote.origin.url)"
 		REMOTENAME="$PREFIX$USERNAME/$REPONAME.git"
-		if [[ ORIGINNAME -eq REMOTENAME ]]; then
+		if [[ "$ORIGINNAME" -eq "$REMOTENAME" ]]; then
 			echo "That is your own fork. Checking out your solutions"
 			git checkout solutions && exit 0
 		fi
-		echo 'adding repository and checking out'
-		git remote add "$USERNAME" REMOTENAME &&
+		echo 'adding repository and checking out' &&
+		git remote add "$USERNAME" "$REMOTENAME" &&
 		git fetch "$USERNAME" "$BRANCH" &&
 		(git checkout -b "$USERNAME-$BRANCH" "$USERNAME/$BRANCH") || (git checkout "$USERNAME-$BRANCH" && git reset --hard FETCH_HEAD && git clean -df) &&
 		exit 0
@@ -231,7 +231,7 @@ case $1 in
 		git merge upstream/master &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
-		echo "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload"
+		echo "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
 		exit 0
 		;;
 	'finish-task' )
@@ -246,8 +246,8 @@ case $1 in
 		git checkout solutions &&
 		git merge "$2-solution" -m "finish $2-solution" &&
 		git push --set-upstream origin solutions &&
-		echo "Now got to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:$3-solution?expand=1 to open a pull request"
-		echo "Done!"
+		echo "Now got to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:$2-solution?expand=1 to open a pull request" &&
+		echo "Done!" &&
 		exit 0
 		;;
 	'update-task' )
