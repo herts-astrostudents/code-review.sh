@@ -113,17 +113,24 @@ if ! git status --porcelain &> /dev/null; then
 	echo "Not in a git repository, exiting" && exit 1
 fi
 TOPLEVEL="$(git rev-parse --show-toplevel)"
-ORIGIN="$(git config --get remote.origin.url)"
 REPONAME="$(basename -s .git `git config --get remote.origin.url`)"
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+ORIGIN="$(git config --get remote.origin.url)"
+UPSTREAM_ORIGIN="$(git config --get remote.upstream.url)"
 if [[ "$(git config --get remote.origin.url)" != "git@"* ]]; then
 	PREFIX="https://github.com/"
 else
 	PREFIX="git@github.com:"
 fi
 HTTPS="https://github.com/"
-GITHUB="${ORIGIN/$PREFIX/$HTTPS}"
-GITHUB="${GITHUB::-4}"
-CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+GITHUB_ORIGIN="${ORIGIN/$PREFIX/$HTTPS}"
+GITHUB_ORIGIN="${GITHUB::-4}"
+GITHUB_UPSTREAM="${UPSTREAM_ORIGIN/$PREFIX/$HTTPS}"
+GITHUB_UPSTREAM="${GITHUB_UPSTREAM::-4}"
+
+GITHUB_USERNAME="${ORIGIN/$PREFIX}"
+GITHUB_USERNAME="${GITHUB_USERNAME%/*}"
 
 
 check_for_changes "$TOPLEVEL" upstream master
@@ -233,7 +240,8 @@ case $1 in
 		git checkout solutions &&
 		git merge "$2-solution" -m "finish $2-solution" &&
 		git push --set-upstream origin solutions &&
-		echo "Now open a pull request on github.com and your're done!"
+		echo "Now got to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:$3-solution?expand=1 to open a pull request"
+		echo "Done!"
 		exit 0
 		;;
 	'update-task' )
@@ -262,9 +270,10 @@ case $1 in
 				echo "We will now develop the new task-$3 by branching from the development branch (where all experiments/works in progress should branch from)" &&
 				echo "The master branch should be kept working" &&
 				git checkout master &&
-				(git branch develop || echo "develop branch already exists") &&
-				(git branch solutions-develop || echo "solutions-develop branch already exists") &&
-				git checkout develop &&
+				git branch "task-$3/finalised/task" &&
+				git checkout master &&
+				git branch "task-$3/finalised/solution" &&
+				git checkout master &&
 				git checkout -b "task-$3/develop" &&
 				cd $TOPLEVEL && mkdir "Task $3" &&
 				echo "Summary" &&
@@ -305,18 +314,18 @@ case $1 in
 				fi
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				git checkout develop && 
+				git checkout "task-$3/finalised/task" && 
 				git merge --squash "task-$3/task" -m "merged task" &&
 				git add --all && git commit -m "merged task" &&
-				git checkout solutions-develop &&
+				git checkout "task-$3/finalised/solution" &&
 				git merge "task-$3/solution" -m "merged solution" &&
 				git branch -D "task-$3/task" &&
 				git branch -D "task-$3/solution" &&
 				git checkout master &&
 				echo "Summary" &&
 				echo "=======" &&
-				echo "Merged the new task (without solution into the main development branch" &&
-				echo "Merged the new solution to that task into the solution development branch" &&
+				echo "Merged the new task (without solution into the finalised task branch" &&
+				echo "Merged the new solution to that task into the finalised solution branch" &&
 				echo "Deleted the temporary task-$3 solution and task branches" &&
 				echo "Returned to the master branch" &&
 				echo "Task $3 has been finalised but not published. No one else can see it yet" &&
@@ -324,31 +333,31 @@ case $1 in
 				echo "You may need to change directory now since the master branch doesn't know about your task yet (it will after publishing)" &&
 				exit 0
 			        ;;
-			'publish-tasks' )
-				if [[ $# -ne 2 ]]; then
+			'publish-task' )
+				if [[ $# -ne 3 ]]; then
 					echo "incorrect usage"
-					echo "USAGE: code-review.sh develop publish-tasks"
+					echo "USAGE: code-review.sh develop publish-task <TASK-NAME>"
 					exit 1
 				fi
-				read -p "This will publish your all TASKS (with no solutions) to github. Continue? [enter]"
+				read -p "This will publish your task-$3 TASK (with no solution) to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				git push --set-upstream origin develop &&
-				echo "Now go to $GITHUB/pull/new/develop to open a pull request" &&
+				git push --set-upstream origin "task-$3/finalised/task" &&
+				echo "Now go to $GITHUB_UPSTREAM/compare/master...$GITHUB_USERNAME:task-$3/finalised/task?expand=1 to open a pull request" &&
 				echo "Use code-review.sh develop publish-solutions to publish the SOLUTIONS" &&
 				exit 0
 				;;
-			'publish-solutions' )
-				if [[ $# -ne 2 ]]; then
+			'publish-solution' )
+				if [[ $# -ne 3 ]]; then
 					echo "incorrect usage"
-					echo "USAGE: code-review.sh develop publish-solutions"
+					echo "USAGE: code-review.sh develop publish-solution <TASK-NAME>"
 					exit 1
 				fi
-				read -p "This will publish your SOLUTIONS for to github. Continue? [enter]"
+				read -p "This will publish your task-$3 SOLUTION to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				git push --set-upstream origin solutions-develop &&
-				echo "Now go to $GITHUB/pull/new/solutions-develop and select base branch to solutions to open a pull request" &&
+				git push --set-upstream origin "task-$3/finalised/solution" &&
+				echo "Now go to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:task-$3/finalised/solution?expand=1 to open a pull request" &&
 				exit 0
 				;;
 			'reopen-finalised-task' )
@@ -372,7 +381,7 @@ case $1 in
 esac
 
 echo "incorrect usage"
-echo "USAGE: code-review.sh <first-time-setup|view-solution|start-task|finish-task|pull-tasks>"
+echo "USAGE: code-review.sh <first-time-setup|view-solution|start-task|finish-task|pull-tasks|update-task>"
 echo "       or"
 echo "       code-review.sh develop <create-task|finalise-task|publish-task|publish-solution>"
 exit 1
