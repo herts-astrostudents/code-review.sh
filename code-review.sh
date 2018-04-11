@@ -106,6 +106,19 @@ case $1 in
 		git reset --hard origin/master &&
 		exit 0
 		;;
+	'version' )
+		if [[ $# -ne 1 ]]; then
+			echo "incorrect usage"
+			echo "USAGE: code-review.sh version"
+			exit 1
+		fi
+		cd $SCRIPTLOCATION &&
+		echo "latest version number: $(git describe --long --tags --dirty --always --match "v*")"
+		echo "latest tag: $(git describe --abbrev=0 --tags)"
+		echo "current branch: $(git rev-parse --abbrev-ref HEAD)"
+		echo "commit hash: $(git rev-parse --verify HEAD)"
+		exit 0
+		;;
 esac
 
 
