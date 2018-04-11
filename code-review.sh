@@ -104,6 +104,7 @@ case $1 in
 		git checkout master &&
 		git fetch --all &&
 		git reset --hard origin/master &&
+		echo "Update succeeded!"
 		exit 0
 		;;
 esac
