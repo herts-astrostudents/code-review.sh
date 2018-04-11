@@ -118,6 +118,7 @@ CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
 ORIGIN="$(git config --get remote.origin.url)"
 UPSTREAM_ORIGIN="$(git config --get remote.upstream.url)"
+NO_UPSTREAM=$?
 if [[ "$(git config --get remote.origin.url)" != "git@"* ]]; then
 	PREFIX="https://github.com/"
 else
@@ -127,7 +128,11 @@ HTTPS="https://github.com/"
 GITHUB_ORIGIN="${ORIGIN/$PREFIX/$HTTPS}"
 GITHUB_ORIGIN="${GITHUB::-4}"
 GITHUB_UPSTREAM="${UPSTREAM_ORIGIN/$PREFIX/$HTTPS}"
-GITHUB_UPSTREAM="${GITHUB_UPSTREAM::-4}"
+if [[ $NO_UPSTREAM -ne  0 ]]; then
+	echo "Upstream repository not found, run code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
+else
+	GITHUB_UPSTREAM="${GITHUB_UPSTREAM::-4}" # chop of .git if there is an upstream repo
+fi
 
 GITHUB_USERNAME="${ORIGIN/$PREFIX}"
 GITHUB_USERNAME="${GITHUB_USERNAME%/*}"
