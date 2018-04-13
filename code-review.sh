@@ -44,7 +44,7 @@ check_for_changes(){
 			LASTCHECKSTATUS="${CONTENTS#*s}"
 		else
 			LASTCHECKDATE=$CONTENTS
-			LASTCHECKSTATUS=1  # backwards compat
+			LASTCHECKSTATUS=1  # backwards compat - assume out of date
 		fi
 		NOW=$(date +%s)
 		DIFF=$(( NOW - LASTCHECKDATE ))
@@ -120,7 +120,7 @@ case $1 in
 		git checkout master &&
 		git fetch --all &&
 		git reset --hard origin/master &&
-		echo "Update succeeded!"
+		check_for_changes $SCRIPTLOCATION origin master &&
 		exit 0
 		;;
 	'version' )
@@ -243,6 +243,7 @@ case $1 in
 		git checkout master && 
 		git merge upstream/master &&
 		git checkout $CURRENT_BRANCH &&
+		check_for_changes "$TOPLEVEL" upstream master &&
 		echo "run code-review.sh update-task <TASK-NAME> if you need to."
 		exit 0
 		;;
@@ -257,6 +258,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
+		check_for_changes "$TOPLEVEL" upstream master &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
 		echo "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
