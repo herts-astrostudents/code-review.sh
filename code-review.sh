@@ -2,21 +2,31 @@
 
 SCRIPTLOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+check_internet(){ 
+	ping 8.8.8.8 -c 5 -W 1 &>/dev/null
+	return $?
+}
+
+
 remote_status(){
 	# exit codes: (0=up-to-date, 1|2=diverged, 3|4=error)
-	ping 8.8.8.8 -c 1 -W 5 &>/dev/null || (echo "Not connected to internet" && exit 3)
-	git fetch "$1" || (echo "fetch failed" && exit 3)
-	UPSTREAM="$1/$2"
-	LOCAL=$(git rev-parse "$2") || exit 4
-	REMOTE=$(git rev-parse "$UPSTREAM") || exit 4
-	BASE=$(git merge-base @{0} "$UPSTREAM") || exit 4
+	if check_internet; then
+		git fetch "$1" || (echo "fetch failed" && exit 3)
+		UPSTREAM="$1/$2"
+		LOCAL=$(git rev-parse "$2") || exit 4
+		REMOTE=$(git rev-parse "$UPSTREAM") || exit 4
+		BASE=$(git merge-base @{0} "$UPSTREAM") || exit 4
 
-	if [ "$LOCAL" = "$REMOTE" ]; then
-	    return 0
-	elif [ "$LOCAL" = "$BASE" ]; then
-	    return 1
+		if [ "$LOCAL" = "$REMOTE" ]; then
+		    return 0
+		elif [ "$LOCAL" = "$BASE" ]; then
+		    return 1
+		else
+			return 2
+		fi
 	else
-		return 2
+		echo "Not connected to internet"
+		return 3
 	fi
 }
 
@@ -24,34 +34,40 @@ remote_status(){
 check_for_changes(){
 	FREQ=12
 	where="$(pwd)"
+	delimiter="s"
 	cd "$1" || exit 3
 
 	if [[ -f ".last-checked" ]]; then
-		LASTCHECKDATE="$(cat .last-checked)"
+		CONTENTS="$(cat .last-checked)"
+		if [[ $CONTENTS = *"$delimiter"* ]]; then
+			LASTCHECKDATE="${CONTENTS%%s*}"
+			LASTCHECKSTATUS="${CONTENTS#*s}"
+		else
+			LASTCHECKDATE=$CONTENTS
+			LASTCHECKSTATUS=1  # backwards compat
+		fi
 		NOW=$(date +%s)
 		DIFF=$(( NOW - LASTCHECKDATE ))
 	else
 		DIFF="$(((FREQ+1)*60*60))"
+		LASTCHECKSTATUS=1  # assume out of date
 	fi
 
 	if [[ $DIFF -gt "$((60*60*FREQ))" ]]; then
-		echo "checking for updates for $1 ..."
-		STATUS="$(remote_status "$2" "$3")" 
-		if [[ $STATUS -eq 0 ]]; then
-			echo "$(date +%s)" > ".last-checked"
-			cd "$where" || exit 3
-			return 1
-		elif [ $STATUS -gt 0 ] && [ $STATUS -lt 3 ]; then
-			cd "$where" || exit 3
-			return 2
-		else
-			echo "Checking for update failed (exit $STATUS), are you connected to the internet?"
-			cd "$where" || exit 3
-			return 0
+		echo "Checking for updates for $1 ..."
+		remote_status "$2" "$3"
+		STATUS=$? # 0=good, 1-2=bad, 3=offline
+		if [[ $STATUS -eq 3 ]]; then # failed
+			echo "Checking for update failed, connect to internet to allow updates"
+			STATUS=$LASTCHECKSTATUS
 		fi
+		echo "$(date +%s)s$STATUS" > ".last-checked"
+		cd "$where" || exit 3
+		return $STATUS
+
 	else
 		cd "$where" || exit 3
-		return 0
+		return $LASTCHECKSTATUS
 	fi
 
 }
@@ -68,9 +84,9 @@ require_clean(){
 
 check_for_changes $SCRIPTLOCATION origin master
 CODE=$?
-if [[ $CODE -eq 1 ]]; then
+if [[ $CODE -eq 0 ]]; then
 	echo "code-review.sh is up to date!"
-elif [[ $CODE -gt 1 ]]; then
+else
 	echo "code-review.sh is out-of-date please run code-review.sh update"
 fi
 
@@ -146,21 +162,20 @@ if [[ $NO_UPSTREAM -ne  0 ]]; then
 	echo "Upstream repository not found, run code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
 else
 	GITHUB_UPSTREAM="${GITHUB_UPSTREAM::-4}" # chop of .git if there is an upstream repo
+	check_for_changes "$TOPLEVEL" upstream master
+	CODE=$?
+	if [[ $CODE -eq 0 ]]; then
+		echo "No new upstream changes to this repository!"
+	else
+		echo "This repository is out-of-date to receive upstream changes"
+		echo "Run code-review.sh pull-tasks to get the latest update"
+		echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on"
+	fi
 fi
 
 GITHUB_USERNAME="${ORIGIN/$PREFIX}"
 GITHUB_USERNAME="${GITHUB_USERNAME%/*}"
 
-
-check_for_changes "$TOPLEVEL" upstream master
-CODE=$?
-if [[ $CODE -eq 1 ]]; then
-	echo "No new upstream changes to this repository!"
-elif [[ $CODE -gt 1 ]]; then
-	echo "This repository is out-of-date to receive upstream changes"
-	echo "Run code-review.sh pull-tasks to get the latest update"
-	echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on"
-fi
 
 
 case $1 in
