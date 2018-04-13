@@ -140,7 +140,7 @@ else
 fi
 HTTPS="https://github.com/"
 GITHUB_ORIGIN="${ORIGIN/$PREFIX/$HTTPS}"
-GITHUB_ORIGIN="${GITHUB::-4}"
+GITHUB_ORIGIN="${GITHUB_ORIGIN::-4}"
 GITHUB_UPSTREAM="${UPSTREAM_ORIGIN/$PREFIX/$HTTPS}"
 if [[ $NO_UPSTREAM -ne  0 ]]; then
 	echo "Upstream repository not found, run code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
