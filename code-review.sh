@@ -30,6 +30,10 @@ remote_status(){
 	fi
 }
 
+record_checked_status(){
+	# usage: record_checked_status DIRECTORY STATUS-CODE (see above)
+	echo "$(date +%s)s$2" > "$1/.last-checked"
+}
 
 check_for_changes(){
 	# usage: check_for_changes directory remote branch frequency
@@ -62,7 +66,7 @@ check_for_changes(){
 			echo "Checking for update failed, connect to internet to allow updates"
 			STATUS=$LASTCHECKSTATUS
 		fi
-		echo "$(date +%s)s$STATUS" > ".last-checked"
+		record_checked_status "$1" "$STATUS" 
 		cd "$where" || exit 3
 		return $STATUS
 
@@ -122,7 +126,7 @@ case $1 in
 		git checkout master &&
 		git fetch --all &&
 		git reset --hard origin/master &&
-		check_for_changes $SCRIPTLOCATION origin master 0 &&  # check immediately
+		record_checked_status "$SCRIPTLOCATION" 0 &&
 		exit 0
 		;;
 	'version' )
@@ -199,7 +203,7 @@ case $1 in
 		git merge upstream/master &&
 		(git branch solutions || echo "solutions branch already exists") &&
 		git checkout master &&
-		check_for_changes "$TOPLEVEL" upstream master 0  # update upstream status
+		record_checked_status "$TOPLEVEL" 0 &&
 		echo "Linked to upstream repository, created solutions branch." &&
 		echo "Consider adding this script to your path in your .tcshrc/.bashrc using code-review.sh install for easy access when working" &&
 		echo "Now use code-review.sh start-task to start the latest task" &&
@@ -247,7 +251,7 @@ case $1 in
 		git checkout master && 
 		git merge upstream/master &&
 		git checkout $CURRENT_BRANCH &&
-		check_for_changes "$TOPLEVEL" upstream master 0 &&  # check immediately 
+		record_checked_status "$TOPLEVEL" 0 &&
 		echo "run code-review.sh update-task <TASK-NAME> if you need to."
 		exit 0
 		;;
@@ -262,7 +266,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
-		check_for_changes "$TOPLEVEL" upstream master 0 &&
+		record_checked_status "$TOPLEVEL" 0 &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
 		echo "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
