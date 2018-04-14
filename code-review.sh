@@ -157,6 +157,8 @@ UPSTREAM_ORIGIN="$(git config --get remote.upstream.url)"
 NO_UPSTREAM=$?
 if [[ "$(git config --get remote.origin.url)" != "git@"* ]]; then
 	PREFIX="https://github.com/"
+	echo "You are using https, which requires you to enter your password each time you push."
+	echo "Consider using ssh which does not require passwords: https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/"
 else
 	PREFIX="git@github.com:"
 fi
