@@ -32,7 +32,8 @@ remote_status(){
 
 
 check_for_changes(){
-	FREQ=12
+	# usage: check_for_changes directory remote branch frequency
+	FREQ=$4
 	where="$(pwd)"
 	delimiter="s"
 	cd "$1" || exit 3
@@ -82,7 +83,7 @@ require_clean(){
 }
 
 
-check_for_changes $SCRIPTLOCATION origin master
+check_for_changes $SCRIPTLOCATION origin master 12  # check every 12 hours
 CODE=$?
 if [[ $CODE -eq 0 ]]; then
 	echo "code-review.sh is up to date!"
@@ -120,7 +121,7 @@ case $1 in
 		git checkout master &&
 		git fetch --all &&
 		git reset --hard origin/master &&
-		check_for_changes $SCRIPTLOCATION origin master &&
+		check_for_changes $SCRIPTLOCATION origin master 0 &&  # check immediately
 		exit 0
 		;;
 	'version' )
@@ -162,12 +163,12 @@ if [[ $NO_UPSTREAM -ne  0 ]]; then
 	echo "Upstream repository not found, run code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
 else
 	GITHUB_UPSTREAM="${GITHUB_UPSTREAM::-4}" # chop of .git if there is an upstream repo
-	check_for_changes "$TOPLEVEL" upstream master
+	check_for_changes "$TOPLEVEL" upstream master 12
 	CODE=$?
 	if [[ $CODE -eq 0 ]]; then
 		echo "No new upstream changes to this repository!"
 	else
-		echo "This repository is out-of-date to receive upstream changes"
+		echo "The repository $TOPLEVEL is out-of-date to receive upstream changes"
 		echo "Run code-review.sh pull-tasks to get the latest update"
 		echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on"
 	fi
@@ -196,6 +197,7 @@ case $1 in
 		git merge upstream/master &&
 		(git branch solutions || echo "solutions branch already exists") &&
 		git checkout master &&
+		check_for_changes "$TOPLEVEL" upstream master 0  # update upstream status
 		echo "Linked to upstream repository, created solutions branch." &&
 		echo "Consider adding this script to your path in your .tcshrc/.bashrc using code-review.sh install for easy access when working" &&
 		echo "Now use code-review.sh start-task to start the latest task" &&
@@ -243,7 +245,7 @@ case $1 in
 		git checkout master && 
 		git merge upstream/master &&
 		git checkout $CURRENT_BRANCH &&
-		check_for_changes "$TOPLEVEL" upstream master &&
+		check_for_changes "$TOPLEVEL" upstream master 0 &&  # check immediately 
 		echo "run code-review.sh update-task <TASK-NAME> if you need to."
 		exit 0
 		;;
@@ -258,7 +260,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
-		check_for_changes "$TOPLEVEL" upstream master &&
+		check_for_changes "$TOPLEVEL" upstream master 0 &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
 		echo "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
