@@ -146,7 +146,8 @@ esac
 
 
 if ! git status --porcelain &> /dev/null; then
-	echo "Not in a git repository, exiting" && exit 1
+	echo "================" && echo "Not in a git repository, exiting" && exit 1
+
 fi
 TOPLEVEL="$(git rev-parse --show-toplevel)"
 REPONAME="$(basename -s .git `git config --get remote.origin.url`)"
@@ -179,8 +180,8 @@ else
 		echo "Run code-review.sh pull-tasks to get the latest update"
 		echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on"
 	fi
-	echo "================"
 fi
+echo "================"
 
 GITHUB_USERNAME="${ORIGIN/$PREFIX}"
 GITHUB_USERNAME="${GITHUB_USERNAME%/*}"
