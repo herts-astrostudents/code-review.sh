@@ -146,7 +146,8 @@ esac
 
 
 if ! git status --porcelain &> /dev/null; then
-	echo "Not in a git repository, exiting" && exit 1
+	echo "================" && echo "Not in a git repository, exiting" && exit 1
+
 fi
 TOPLEVEL="$(git rev-parse --show-toplevel)"
 REPONAME="$(basename -s .git `git config --get remote.origin.url`)"
@@ -157,6 +158,8 @@ UPSTREAM_ORIGIN="$(git config --get remote.upstream.url)"
 NO_UPSTREAM=$?
 if [[ "$(git config --get remote.origin.url)" != "git@"* ]]; then
 	PREFIX="https://github.com/"
+	echo "You are using https, which requires you to enter your password each time you push."
+	echo "Consider using ssh which does not require passwords: https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/"
 else
 	PREFIX="git@github.com:"
 fi
@@ -177,8 +180,8 @@ else
 		echo "Run code-review.sh pull-tasks to get the latest update"
 		echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on"
 	fi
-	echo "================"
 fi
+echo "================"
 
 GITHUB_USERNAME="${ORIGIN/$PREFIX}"
 GITHUB_USERNAME="${GITHUB_USERNAME%/*}"
@@ -250,6 +253,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
+		git push origin master &&
 		git checkout $CURRENT_BRANCH &&
 		record_checked_status "$TOPLEVEL" 0 &&
 		echo "run code-review.sh update-task <TASK-NAME> if you need to."
@@ -266,6 +270,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
+		git push origin master &&
 		record_checked_status "$TOPLEVEL" 0 &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
