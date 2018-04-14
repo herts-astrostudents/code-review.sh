@@ -250,6 +250,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
+		git push origin master &&
 		git checkout $CURRENT_BRANCH &&
 		record_checked_status "$TOPLEVEL" 0 &&
 		echo "run code-review.sh update-task <TASK-NAME> if you need to."
@@ -266,6 +267,7 @@ case $1 in
 		git fetch upstream &&
 		git checkout master && 
 		git merge upstream/master &&
+		git push origin master &&
 		record_checked_status "$TOPLEVEL" 0 &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
