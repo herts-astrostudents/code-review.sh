@@ -83,12 +83,13 @@ require_clean(){
 }
 
 
+echo "================"
 check_for_changes $SCRIPTLOCATION origin master 12  # check every 12 hours
 CODE=$?
 if [[ $CODE -eq 0 ]]; then
 	echo "code-review.sh is up to date!"
 else
-	echo "code-review.sh is out-of-date please run code-review.sh update"
+	echo "code-review.sh is out-of-date please run 'code-review.sh update'"
 fi
 
 
@@ -166,12 +167,13 @@ else
 	check_for_changes "$TOPLEVEL" upstream master 12
 	CODE=$?
 	if [[ $CODE -eq 0 ]]; then
-		echo "No new upstream changes to this repository!"
+		echo "No new upstream changes to the repository $TOPLEVEL!"
 	else
-		echo "The repository $TOPLEVEL is out-of-date to receive upstream changes"
+		echo "The repository $TOPLEVEL is out-of-date. Run 'code-review.sh pull-tasks' to receive upstream changes"
 		echo "Run code-review.sh pull-tasks to get the latest update"
 		echo "Then run code-review.sh update-task <TASK-NAME> to update the task you are working on"
 	fi
+	echo "================"
 fi
 
 GITHUB_USERNAME="${ORIGIN/$PREFIX}"
