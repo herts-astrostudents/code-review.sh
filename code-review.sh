@@ -88,7 +88,7 @@ require_clean(){
 
 
 echo "================"
-check_for_changes $SCRIPTLOCATION origin master 12  # check every 12 hours
+check_for_changes "$SCRIPTLOCATION" origin master 12  # check every 12 hours
 CODE=$?
 if [[ $CODE -eq 0 ]]; then
 	echo "code-review.sh is up to date!"
@@ -105,15 +105,16 @@ case $1 in
 			exit 1
 		fi
 		HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-		if [[ -f "$HOME/.bashrc" ]]; then
-			echo "PATH="'$PATH:"'"$HERE"'"' >> "$HOME/.bashrc"
-			echo "added this script to ~/.bashrc, now run source ~/.bashrc"
-		fi
-		if [[ -f "$HOME/.tcshrc" ]]; then
-			echo "setenv PATH "'${PATH}:"'"$HERE"'"' >> "$HOME/.tcshrc"
-			echo "added this script to ~/.tcshrc, now run source ~/.tcshrc"
-		fi
-		echo "Script has been added to you PATH, meaning you can run code-review.sh from anywhere"
+
+		touch "$HOME/.bashrc" 
+		echo "PATH="'$PATH:"'"$HERE"'"' >> "$HOME/.bashrc"
+		echo "added this script to ~/.bashrc, now run source ~/.bashrc"
+		
+		touch "$HOME/.tcshrc"
+		echo "setenv PATH "'${PATH}:"'"$HERE"'"' >> "$HOME/.tcshrc"
+		echo "added this script to ~/.tcshrc, now run source ~/.tcshrc"
+		
+		echo "Script has been added to your PATH, meaning you can run code-review.sh from anywhere"
 		exit 0
 		;;
 	'update' )
@@ -122,7 +123,7 @@ case $1 in
 			echo "USAGE: code-review.sh update"
 			exit 1
 		fi
-		cd $SCRIPTLOCATION &&
+		cd "$SCRIPTLOCATION" &&
 		git checkout master &&
 		git fetch --all &&
 		git reset --hard origin/master &&
@@ -135,7 +136,7 @@ case $1 in
 			echo "USAGE: code-review.sh version"
 			exit 1
 		fi
-		cd $SCRIPTLOCATION &&
+		cd "$SCRIPTLOCATION" &&
 		echo "latest version number: $(git describe --long --tags --dirty --always --match "v*")"
 		echo "latest tag: $(git describe --abbrev=0 --tags)"
 		echo "current branch: $(git rev-parse --abbrev-ref HEAD)"
@@ -150,7 +151,7 @@ if ! git status --porcelain &> /dev/null; then
 
 fi
 TOPLEVEL="$(git rev-parse --show-toplevel)"
-REPONAME="$(basename -s .git `git config --get remote.origin.url`)"
+REPONAME="$(basename -s .git $(git config --get remote.origin.url))"
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
 ORIGIN="$(git config --get remote.origin.url)"
@@ -254,7 +255,7 @@ case $1 in
 		git checkout master && 
 		git merge upstream/master &&
 		git push origin master &&
-		git checkout $CURRENT_BRANCH &&
+		git checkout "$CURRENT_BRANCH" &&
 		record_checked_status "$TOPLEVEL" 0 &&
 		echo "run code-review.sh update-task <TASK-NAME> if you need to."
 		exit 0
@@ -324,7 +325,7 @@ case $1 in
 				git branch "task-$3/finalised/solution" &&
 				git checkout master &&
 				git checkout -b "task-$3/develop" &&
-				cd $TOPLEVEL && mkdir "Task $3" &&
+				cd "$TOPLEVEL" && mkdir "Task $3" &&
 				echo "Summary" &&
 				echo "=======" &&
 				echo "The current branch task-$3/develop has been created for you."
