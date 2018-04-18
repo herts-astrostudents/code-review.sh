@@ -302,7 +302,7 @@ case $1 in
 		git checkout solutions &&
 		git merge "$2-solution" -m "finish $2-solution" &&
 		git push --set-upstream origin solutions &&
-		echo "Now got to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:$2-solution?expand=1 to open a pull request" &&
+		echo "Now got to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:solutions?expand=1 to open a pull request" &&
 		echo "Done!" &&
 		exit 0
 		;;
