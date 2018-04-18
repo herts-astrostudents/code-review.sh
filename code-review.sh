@@ -107,14 +107,24 @@ case $1 in
 		HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 		touch "$HOME/.bashrc" 
-		echo "PATH="'$PATH:"'"$HERE"'"' >> "$HOME/.bashrc"
-		echo "added this script to ~/.bashrc, now run source ~/.bashrc"
+		addition="PATH="'$PATH:"'"$HERE"'"'
+		if [[ "$(cat "$HOME/.bashrc")" = *"$addition"* ]]; then
+			echo "$addition" >> "$HOME/.bashrc"
+			echo "added this script to ~/.bashrc, now run source ~/.bashrc"
+		else
+			echo "already added to ~/.bashrc"
+		fi
 		
 		touch "$HOME/.tcshrc"
-		echo "setenv PATH "'${PATH}:"'"$HERE"'"' >> "$HOME/.tcshrc"
-		echo "added this script to ~/.tcshrc, now run source ~/.tcshrc"
-		
+		addition="setenv PATH "'${PATH}:"'"$HERE"'"'
+		if [[ "$(cat "$HOME/.tcshrc")" = *"$addition"* ]]; then
+			echo "$addition" >> "$HOME/.tcshrc"
+			echo "added this script to ~/.tcshrc, now run source ~/.tcshrc"
+		else
+			echo "already added to ~/.tcshrc"
+		fi
 		echo "Script has been added to your PATH, meaning you can run code-review.sh from anywhere"
+		echo "================"
 		exit 0
 		;;
 	'update' )
@@ -128,6 +138,7 @@ case $1 in
 		git fetch --all &&
 		git reset --hard origin/master &&
 		record_checked_status "$SCRIPTLOCATION" 0 &&
+		echo "================" &&
 		exit 0
 		;;
 	'version' )
@@ -137,10 +148,11 @@ case $1 in
 			exit 1
 		fi
 		cd "$SCRIPTLOCATION" &&
-		echo "latest version number: $(git describe --long --tags --dirty --always --match "v*")"
-		echo "latest tag: $(git describe --abbrev=0 --tags)"
-		echo "current branch: $(git rev-parse --abbrev-ref HEAD)"
-		echo "commit hash: $(git rev-parse --verify HEAD)"
+		echo "latest version number: $(git describe --long --tags --dirty --always --match "v*")" &&
+		echo "latest tag: $(git describe --abbrev=0 --tags)" &&
+		echo "current branch: $(git rev-parse --abbrev-ref HEAD)" &&
+		echo "commit hash: $(git rev-parse --verify HEAD)" &&
+		echo "================" &&
 		exit 0
 		;;
 esac
@@ -151,7 +163,7 @@ if ! git status --porcelain &> /dev/null; then
 
 fi
 TOPLEVEL="$(git rev-parse --show-toplevel)"
-REPONAME="$(basename -s .git $(git config --get remote.origin.url))"
+REPONAME="$(basename -s .git "$(git config --get remote.origin.url)")"
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
 ORIGIN="$(git config --get remote.origin.url)"
@@ -427,7 +439,6 @@ case $1 in
 				echo "Commit and then use code-review.sh develop begin-finalise-task $3 once you're done." &&
 				exit 0
 		esac
-
 esac
 
 echo "incorrect usage"
