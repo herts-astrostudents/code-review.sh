@@ -303,7 +303,7 @@ case $1 in
 		git merge "$2-solution" -m "finish $2-solution" &&
 		git push --set-upstream origin solutions &&
 		git fetch upstream &&
-		if grep -q "upstream/solutions-$GITHUB_USERNAME" <<<"$(git branch -r)"; then
+		if grep -q "upstream/solutions-$GITHUB_USERNAME"'$' <<<"$(git branch -r)"; then
 			PRBRANCH="solutions-$GITHUB_USERNAME"
 		else
 			PRBRANCH="master"
