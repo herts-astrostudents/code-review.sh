@@ -163,6 +163,7 @@ case $1 in
 		git fetch --all &&
 		git reset --hard origin/master &&
 		record_checked_status "$SCRIPTLOCATION" 0 &&
+		echo_good "Update complete!" &&
 		echo_norm "================" &&
 		exit 0
 		;;
@@ -295,6 +296,7 @@ case $1 in
 		git push origin master &&
 		git checkout "$CURRENT_BRANCH" &&
 		record_checked_status "$TOPLEVEL" 0 &&
+		echo_good "Your local and remote repositories have been updated successfully!"
 		echo_norm "run code-review.sh rebase-task <TASK-NAME> if you need to update a task in progress."
 		exit 0
 		;;
@@ -349,7 +351,7 @@ case $1 in
 		cd "$TOPLEVEL" &&
 		(git rebase master "$2-solution" &&
 		git checkout "$CURRENT_BRANCH" &&
-		echo_good "Update succeeded, continue as you were. You may notice some changes from upstream!") || (echo_bad "update failed...") &&
+		echo_good "Rebase succeeded, continue as you were. You may notice some changes from upstream!") || (echo_bad "rebase failed...") &&
 		exit 0
 		;;
 	'develop' )
