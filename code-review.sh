@@ -311,11 +311,18 @@ case $1 in
 			echo_bad "USAGE: code-review.sh start-task <TASK-NAME>"
 			exit 1
 		fi
-		pull_tasks &&
-		git checkout -b "$2-solution" && 
-		cd "Task $2" &&
-		echo_good "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
-		exit 0
+		git checkout -b "$2-solution" &&  
+		if [[ "$(cd "Task $2")" ]]; then
+			echo_good "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
+			exit 0
+		else
+			echo_bad "Task $2 folder does not exist" && 
+			git checkout "$CURRENT_BRANCH" &&
+			git branch -D "$2-solution" && 
+			echo_norm "Deleted redundant branch $2-solution" &&
+			echo_bad "There does not seem to be a task folder for Task $2. To pull the new tasks: code-review.sh pull-tasks" &&
+			exit 1
+		fi		
 		;;
 	'finish-task' )
 		if [[ $# -ne 2 ]]; then
