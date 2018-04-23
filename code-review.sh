@@ -312,8 +312,8 @@ case $1 in
 			exit 1
 		fi
 		git checkout -b "$2-solution" &&  
-		if [[ "$(cd "Task $2")" ]]; then
-			echo_good "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
+		if [[ -d  "Task $2" ]]; then
+			echo_good "Now on branch $2-solution, do your work in the Task $2 folder and then run code-review.sh finish-task to commit and upload" &&
 			exit 0
 		else
 			echo_bad "Task $2 folder does not exist" && 
