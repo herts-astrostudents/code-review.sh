@@ -283,18 +283,33 @@ case $1 in
 			exit 1
 		fi
 		require_clean &&
-		ORIGINNAME="$(git config --get remote.origin.url)"
-		REMOTENAME="$PREFIX$USERNAME/$REPONAME.git"
-		if [[ "$ORIGINNAME" -eq "$REMOTENAME" ]]; then
+		ORIGINNAME="$HTTPS$GITHUB_USERNAME/$REPONAME.git" # "$(git config --get remote.origin.url)"
+		REMOTENAME="$HTTPS$USERNAME/$REPONAME.git"
+		if [[ "$ORIGINNAME" == "$REMOTENAME" ]]; then
 			echo_norm "That is your own fork. Checking out your solutions"
 			git checkout solutions && exit 0
 		fi
-		echo_norm 'adding repository and checking out' &&
-		git remote add "$USERNAME" "$REMOTENAME" &&
-		git fetch "$USERNAME" "$BRANCH" &&
-		(git checkout -b "$USERNAME-$BRANCH" "$USERNAME/$BRANCH") || (git checkout "$USERNAME-$BRANCH" && git reset --hard FETCH_HEAD && git clean -df) &&
-		echo_good "checked out $USERNAME-$BRANCH" &&
-		exit 0
+		echo_norm 'adding repository and checking out'
+		git remote add "$USERNAME" "$REMOTENAME" &>/dev/null
+		if [[ $? -eq 0 ]]; then
+			git fetch "$USERNAME" 
+			git checkout "$USERNAME/$BRANCH"
+			if [ $? -eq 0 ]; then
+				echo_good "Now on the $BRANCH branch of $USERNAME"
+				echo_norm "This is a temporary branch"
+				echo_norm "To return to a local branch use git checkout <name>. e.g. git checkout master"
+				git remote remove "$USERNAME" &&
+				exit 0
+			else
+				echo_bad "$USERNAME exists but the branch $USERNAME/$BRANCH does not."
+				git remote remove "$USERNAME" &&
+				exit 1
+			fi
+		else
+			echo_bad "$USERNAME does not exist!" &&
+			git remote remove "$USERNAME" &&
+			exit 1
+		fi
 		;;
 	'pull-tasks' )
 		if [[ $# -ne 1 ]]; then
