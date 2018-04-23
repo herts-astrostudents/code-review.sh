@@ -111,8 +111,7 @@ require_clean(){
 	fi
 }
 
-
-echo_norm "================"
+echo_norm "====<UPDATES>==="
 check_for_changes "$SCRIPTLOCATION" origin master 12  # check every 12 hours
 CODE=$?
 if [[ $CODE -eq 0 ]]; then
@@ -227,6 +226,21 @@ GITHUB_USERNAME="${GITHUB_USERNAME%/*}"
 
 
 
+pull_tasks(){
+	cd "$TOPLEVEL" &&
+	(rm ".last-checked" || echo "reset last-checked") &&
+	require_clean &&
+	git fetch upstream &&
+	git checkout master && 
+	git merge upstream/master &&
+	git push origin master &&
+	git checkout "$CURRENT_BRANCH" &&
+	record_checked_status "$TOPLEVEL" 0 &&
+	echo_good "Your local and remote repositories have been updated successfully!" &&
+	echo_norm "[run code-review.sh rebase-task <TASK-NAME> if you need to update a task in progress.]"
+}
+
+
 case $1 in
 	'first-time-setup' )
 		if [[ $# -ne 2 ]]; then
@@ -288,16 +302,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh pull-tasks"
 			exit 1
 		fi
-		require_clean &&
-		cd "$TOPLEVEL" &&
-		git fetch upstream &&
-		git checkout master && 
-		git merge upstream/master &&
-		git push origin master &&
-		git checkout "$CURRENT_BRANCH" &&
-		record_checked_status "$TOPLEVEL" 0 &&
-		echo_good "Your local and remote repositories have been updated successfully!"
-		echo_norm "run code-review.sh rebase-task <TASK-NAME> if you need to update a task in progress."
+		pull_tasks &&
 		exit 0
 		;;
 	'start-task' )
@@ -306,13 +311,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh start-task <TASK-NAME>"
 			exit 1
 		fi
-		require_clean &&
-		cd "$TOPLEVEL" &&
-		git fetch upstream &&
-		git checkout master && 
-		git merge upstream/master &&
-		git push origin master &&
-		record_checked_status "$TOPLEVEL" 0 &&
+		pull_tasks &&
 		git checkout -b "$2-solution" && 
 		cd "Task $2" &&
 		echo_good "Now on branch $2-solution, do your work in the task folder and then run code-review.sh finish-task to commit and upload" &&
