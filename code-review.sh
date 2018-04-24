@@ -348,7 +348,13 @@ case $1 in
 		read -p "Submit finished task $2? [enter]"
 		require_clean &&
 		cd "$TOPLEVEL" &&
-		git checkout solutions &&
+		git checkout solutions
+		if [[ $? -ne 0 ]]; then
+			echo_norm "Creating branch 'solutions' from master"
+			echo_bad "This probably means that first-time-setup was not run"
+			git checkout master &&
+			git checkout -b solutions
+		fi
 		git merge "$2-solution" -m "finish $2-solution" &&
 		git push --set-upstream origin solutions &&
 		git fetch upstream &&
