@@ -376,9 +376,29 @@ case $1 in
 		read -p "$Yellow This will pull any changes from the remote repository and merge them with your current work on Task $2. Continue? [enter] $reset"
 		require_clean &&
 		cd "$TOPLEVEL" &&
-		(git rebase master "$2-solution" &&
+		git checkout "$2-solution" &&
+		git merge master
+		if [[ $? -ne 0 ]]; then
+			echo_bad "rebase failed..."
+			echo_bad "The maintainer is really sorry about that! :("
+			echo_bad "You will need to fix the conflicts present in the files below"
+			echo_norm "To do that simply choose which changes to keep in the files"
+			echo_norm "Here's an example. The contents of an example file which has conflicts is displayed below:"
+			echo 
+			echo -e "<<<<<<< HEAD\nfrom mistake import terrible_idea as function\nfunction(data)\n=======\nfrom better import good_idea as function\n>>>>>>> master"
+			echo
+			echo_norm "below the ======, there is the fixed file from github."
+			echo_norm "above the ====== is your version"
+			echo_norm "In this case we would amend the file to "
+			echo 
+			echo -e "from better import good_idea as function\nfunction(data)"
+			echo
+			echo 'Run git commit -am "fixed conflict" when youre finished'
+			echo_norm "Good luck!"
+			exit 0
+		fi
 		git checkout "$CURRENT_BRANCH" &&
-		echo_good "Rebase succeeded, continue as you were. You may notice some changes from upstream!") || (echo_bad "rebase failed...") &&
+		echo_good "Rebase succeeded, continue as you were. You may notice some changes from upstream!" &&
 		exit 0
 		;;
 	'develop' )
@@ -440,11 +460,19 @@ case $1 in
 				require_clean &&
 				cd "$TOPLEVEL" &&
 				git checkout "task-$3/finalised/task" && 
-				git merge --squash "task-$3/task" -m "merged task" &&
+				git merge --squash "task-$3/task" -m "merged task" --strategy-option theirs
+				if grep -q "conflict" <<<"$(git diff --check)"; then
+					echo_bad "I'm afraid that there have been some conflicts. Please fix them before running end-finalise-task again!"
+					exit 0
+				fi
 				git add --all && git commit -m "merged task" &&
 				git checkout "task-$3/finalised/solution" &&
-				git merge "task-$3/solution" -m "merged solution" &&
-				git branch -D "task-$3/task" &&
+				git merge "task-$3/solution" -m "merged solution" --strategy-option theirs
+				if grep -q "conflict" <<<"$(git diff --check)"; then
+					echo_bad "I'm afraid that there have been some conflicts. Please fix them before running end-finalise-task again!"
+					exit 0
+				fi
+				git branch -D "task-$3/task" &&	
 				git branch -D "task-$3/solution" &&
 				git checkout master &&
 				echo_good "Success!"
