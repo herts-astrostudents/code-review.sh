@@ -298,6 +298,7 @@ case $1 in
 				echo_good "Now on the $BRANCH branch of $USERNAME"
 				echo_norm "This is a temporary branch"
 				echo_norm "To return to a local branch use git checkout <name>. e.g. git checkout master"
+				echo_norm "If you have made any changes you'll need to use git checkout -- ." 
 				git remote remove "$USERNAME" &&
 				exit 0
 			else
