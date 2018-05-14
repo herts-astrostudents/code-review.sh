@@ -373,7 +373,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh rebase-task <TASK-NAME>"
 			exit 1
 		fi
-		read -p "$Yellow This will pull any changes from the remote repository and merge them with your current work on Task $2. Continue? [enter] $reset"
+		read -p "This will pull any changes from the remote repository and merge them with your current work on Task $2. Continue? [enter]"
 		require_clean &&
 		cd "$TOPLEVEL" &&
 		git checkout "$2-solution" &&
@@ -493,7 +493,7 @@ case $1 in
 					echo_bad "USAGE: code-review.sh develop publish-task <TASK-NAME>"
 					exit 1
 				fi
-				read -p "$Yellow This will publish your task-$3 TASK (with no solution) to github. Continue? [enter] $reset"
+				read -p "This will publish your task-$3 TASK (with no solution) to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
 				git push --set-upstream origin "task-$3/finalised/task" &&
@@ -508,7 +508,7 @@ case $1 in
 					echo_bad "USAGE: code-review.sh develop publish-solution <TASK-NAME>"
 					exit 1
 				fi
-				read -p "$Yellow This will publish your task-$3 SOLUTION to github. Continue? [enter] $reset"
+				read -p "This will publish your task-$3 SOLUTION to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
 				git push --set-upstream origin "task-$3/finalised/solution" &&
@@ -524,7 +524,7 @@ case $1 in
 				fi
 				require_clean &&
 				echo_norm "Warning: reopening and then publishing a task may result in other people losing data if you delete files!"
-				read -p "$Yellow This will repoen edits on task $3 and its solution. Continue? [enter] $reset"
+				read -p "This will repoen edits on task $3 and its solution. Continue? [enter]"
 				(git checkout "task-$3/develop" || (echo_bad "task-$3 has not been created yet" && exit 1) ) &&
 				echo_good "task-$3 has been reopened"
 				echo_norm "Summary" &&
