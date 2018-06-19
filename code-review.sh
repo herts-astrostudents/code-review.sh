@@ -104,8 +104,8 @@ check_for_changes(){
 
 
 require_clean(){
-	if ! [[ -z "$(git status --porcelain)" ]]; then
-		git status
+	if ! [[ -z "$(git status --porcelain | grep -v .last-checked)" ]]; then
+		git status 
 		echo_bad "please commit changes here before starting next task"
 		exit 1
 	fi
