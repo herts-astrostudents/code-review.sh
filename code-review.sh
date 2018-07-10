@@ -206,7 +206,9 @@ GITHUB_ORIGIN="${ORIGIN/$PREFIX/$HTTPS}"
 GITHUB_ORIGIN="${GITHUB_ORIGIN::-4}"
 GITHUB_UPSTREAM="${UPSTREAM_ORIGIN/$PREFIX/$HTTPS}"
 if [[ $NO_UPSTREAM -ne  0 ]]; then
-	echo_bad "Upstream repository not found, run code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
+	echo_bad "Upstream repository not found, Are you in the code-review repository?"
+	echo_bad "If you are, then run code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
+	echo_bad "UPSTREAM_ORGANISATION is probably something like herts-astrostudents"
 else
 	GITHUB_UPSTREAM="${GITHUB_UPSTREAM::-4}" # chop of .git if there is an upstream repo
 	check_for_changes "$TOPLEVEL" upstream master 12
@@ -450,6 +452,8 @@ case $1 in
 				echo_norm "   1. Remove your solution to the task from the task folder" &&
 				echo_norm "   2. Commit the changes"  && 
 				echo_norm "   3. Use code-review.sh develop end-finalise-task $3 to finish" &&
+				echo_norm "If you make a mistake you can always reset back to where you finished creating the task by using"
+				echo_norm "code-review.sh develop reopen-finalised-task $3"
 				exit 0
 				;;
 			'end-finalise-task' )
@@ -555,5 +559,6 @@ echo_bad "                             publish-task"
 echo_bad "                             publish-solution"
 echo_bad "                             reopen-finalised-task"
 echo
-echo_bad "Example: code-review.sh start-task 7"
+echo_bad "Example: To start work on a new task: code-review.sh start-task 7"
+echo_bad "Example: To create a new task for the group: code-review.sh develop create-task 7"
 exit 1
