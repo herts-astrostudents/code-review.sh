@@ -125,28 +125,19 @@ case $1 in
 	'install' )
 		if [[ $# -ne 1 ]]; then
 			echo_bad "incorrect usage"
-			echo_bad "USAGE: ./code-review.sh install"
+			echo_bad "USAGE: code-review.sh install"
 			exit 1
 		fi
 		HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 		touch "$HOME/.bashrc" 
 		addition="PATH="'$PATH:"'"$HERE"'"'
-		if [[ "$(cat "$HOME/.bashrc")" = *"$addition"* ]]; then
-			echo "$addition" >> "$HOME/.bashrc"
-			echo_norm "added this script to ~/.bashrc, now run source ~/.bashrc"
-		else
-			echo_norm "already added to ~/.bashrc"
-		fi
-		
+		echo "$addition" >> "$HOME/.bashrc"
+		echo_norm "added this script to ~/.bashrc, now run source ~/.bashrc"		
 		touch "$HOME/.tcshrc"
 		addition="setenv PATH "'${PATH}:"'"$HERE"'"'
-		if [[ "$(cat "$HOME/.tcshrc")" = *"$addition"* ]]; then
-			echo "$addition" >> "$HOME/.tcshrc"
-			echo_norm "added this script to ~/.tcshrc, now run source ~/.tcshrc"
-		else
-			echo_norm "already added to ~/.tcshrc"
-		fi
+		echo "$addition" >> "$HOME/.tcshrc"
+		echo_norm "added this script to ~/.tcshrc, now run source ~/.tcshrc"
 		echo_norm "Script has been added to your PATH, meaning you can run code-review.sh from anywhere"
 		echo_norm "================"
 		exit 0
