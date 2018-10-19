@@ -9,7 +9,7 @@ When the task is finished, it is pushed to github and then a pull request is mad
 ## Task Flow:
 Install the `code-review.sh script` in your preferred directory (not the same as the code-review directory!!):
 
-    git clone https://github.com/herts-astrostudents/code-review.sh && cd code-review.sh && chmod +x code-review.sh && ./code-review.sh install
+    git clone https://github.com/herts-astrostudents/code-review.sh "$HOME/.code-review.sh" && cd "$HOME/.code-review.sh" && chmod +x code-review.sh && bash code-review.sh install
 
 ## Doing the tasks
 The steps below show you how to do a task that has been put up on github. `<NAME>` is just the name of the branch that you are doing your task on. So if the task has a folder called `Task 6` use `6` as `<NAME>`.
