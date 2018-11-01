@@ -492,7 +492,7 @@ case $1 in
 				read -p "This will publish your task-$3 TASK (with no solution) to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				git push --set-upstream origin "task-$3/finalised/task" &&
+				git push --set-upstream origin "task-$3/finalised/task" --force &&
 				echo_good "Success! Your task-$3 has been pushed to github" &&
 				echo_norm "Now go to $GITHUB_UPSTREAM/compare/master...$GITHUB_USERNAME:task-$3/finalised/task?expand=1 to open a pull request" &&
 				echo_norm "Use code-review.sh develop publish-solutions to publish the SOLUTIONS" &&
@@ -507,7 +507,7 @@ case $1 in
 				read -p "This will publish your task-$3 SOLUTION to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				git push --set-upstream origin "task-$3/finalised/solution" &&
+				git push --set-upstream origin "task-$3/finalised/solution" --force &&
 				echo_good "Success! Your solution to task-$3 has been pushed to github" &&
 				echo_norm "Now go to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:task-$3/finalised/solution?expand=1 to open a pull request" &&
 				exit 0
@@ -519,10 +519,19 @@ case $1 in
 					exit 1
 				fi
 				require_clean &&
-				echo_norm "Warning: reopening and then publishing a task may result in other people losing data if you delete files!"
+				echo_norm "Warning: reopening and then publishing a task may result in other people losing data if you have already published it!"
 				read -p "This will repoen edits on task $3 and its solution. Continue? [enter]"
 				(git checkout "task-$3/develop" || (echo_bad "task-$3 has not been created yet" && exit 1) ) &&
-				echo_good "task-$3 has been reopened"
+				echo_norm "Deleting bad branches" &&
+				git branch -D "task-$3/finalised/task"
+				git branch -D "task-$3/finalised/solution"
+				git branch -D "task-$3/task"
+				git branch -D "task-$3/solution"
+				git checkout master &&
+				git branch "task-$3/finalised/task" &&
+				git branch "task-$3/finalised/solution" &&
+				git checkout "task-$3/develop" &&
+				echo_good "task-$3 has been reopened for editing again" &&
 				echo_norm "Summary" &&
 				echo_norm "=======" &&
 				echo_norm "You have been returned to the task-$3/develop branch" &&
@@ -536,11 +545,11 @@ echo_bad "incorrect usage"
 echo_bad "USAGE:"
 echo_bad "  Commands for working on tasks:" 
 echo_bad "      code-review.sh first-time-setup"
-echo_bad "                     view-solution"
+echo_bad "                     view-solution -> view a github username's solution"
 echo_bad "                     start-task"
 echo_bad "                     finish-task"
 echo_bad "                     pull-tasks"
-echo_bad "                     rebase-task"
+echo_bad "                     rebase-task -> Only use if you are told to do so"
 echo
 echo_bad "  Commands for developing new tasks:"
 echo_bad "      code-review.sh develop create-task"
@@ -548,7 +557,10 @@ echo_bad "                             begin-finalise-task"
 echo_bad "                             end-finalise-task"
 echo_bad "                             publish-task"
 echo_bad "                             publish-solution"
-echo_bad "                             reopen-finalised-task"
+echo_bad "                             reopen-finalised-task -> If you made a mistake, you can go back to try again"
+echo_bad "                                                      Your task and solution will still be there together"
+echo
+echo_bad "To get help with one of the commands run the command without arguments: code-review.sh start-task"
 echo
 echo_bad "Example: To start work on a new task: code-review.sh start-task 7"
 echo_bad "Example: To create a new task for the group: code-review.sh develop create-task 7"
