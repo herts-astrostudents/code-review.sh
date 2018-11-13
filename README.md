@@ -15,10 +15,12 @@ Install the `code-review.sh script` in your preferred directory (not the same as
 The steps below show you how to do a task that has been put up on github. `<NAME>` is just the name of the branch that you are doing your task on. So if the task has a folder called `Task 6` use `6` as `<NAME>`.
 
 0. First time setup `code-review.sh first-time-setup herts-astrostudents` (run this only once ever)
-1. `code-review.sh start-task <NAME>`
-2. Do the task, using git to track progress if you want
-3. `code-review.sh finish-task <NAME>`
-4. "Submit a pull request" to `herts-astrostudents` on github (pull requests are how people submit improvements for inspection on github)
+1. `code-review.sh pull-tasks` - update list of tasks
+2. `code-review.sh start-task <NAME>`
+3. Do the task, using git to track progress if you want
+3.1. Commit all changes if you did not yet do so: `git add -A && git commit -m "completed the task"`
+4. `code-review.sh finish-task <NAME>`
+5. Follow the link provided and click "Create a pull request" to `herts-astrostudents` on github (pull requests are how people submit improvements for inspection on github)
 
 To checkout other people's pull requests during the session, run `git pr <pull request number> upstream` or use `code-review.sh view <USERNAME>` to directly view their solution branch without a pull request.
 
