@@ -244,6 +244,21 @@ case $1 in
 		git config push.default simple
 		UPSTREAM_ORGANISATION=$2
 		UPSTREAM="$PREFIX$UPSTREAM_ORGANISATION/$REPONAME.git"
+
+		if [[ "$UPSTREAM_ORGANISATION/$REPONAME.git" == *"$(git remote -v | grep origin | head -n 1 | cut -f 2)"* ]]; then
+			echo_bad "It seems you have cloned this repository from $UPSTREAM_ORGANISATION/$REPONAME.git"
+			echo_bad "You should not and WILL NOT work on this repository since this is the one that everyone uses and it is not personal to you!"
+			echo_bad "You need to follow these steps:"
+			echo_bad "  1. go to https://github.com/$UPSTREAM_ORGANISATION/$REPONAME" 
+			echo_bad "  2. click the FORK button (this will make your own personal copy of $REPONAME.git)"
+			echo_bad "  3. click the clone/download button and copy the address in the box (preferably clone with ssh instead of https)"
+			echo_bad "  4. Paste the link here"
+			read -r -p "> " response &&
+			git remote remove origin &&
+			git remote add origin "$response" &&
+			git checkout master && git pull &&
+			echo_good "$response has been added and the mistake has been fixed!"
+		fi
 		
 		git remote add upstream "$UPSTREAM"
 		require_clean &&
