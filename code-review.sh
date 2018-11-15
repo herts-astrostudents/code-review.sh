@@ -114,13 +114,31 @@ require_clean(){
 	fi
 }
 
+update(){
+	cd "$SCRIPTLOCATION" &&
+	git checkout master &&
+	git fetch --all &&
+	git reset --hard origin/master &&
+	record_checked_status "$SCRIPTLOCATION" 0 &&
+	dos2unix "$SCRIPTLOCATION/code-review.sh"
+	echo_good "Update complete!" &&
+	echo_norm "================"
+}
+
 echo_norm "====<UPDATES>==="
 check_for_changes "$SCRIPTLOCATION" origin master 12  # check every 12 hours
 CODE=$?
 if [[ $CODE -eq 0 ]]; then
 	echo_good "code-review.sh is up to date!"
 else
-	echo_bad "code-review.sh is out-of-date please run 'code-review.sh update'"
+	echo_bad "code-review.sh is out-of-date!"
+	read -r -p  "Do you wish to update now? [Y/n]" response
+	if [[ "$response" -ne "Y" ]]; then
+		echo_bad "You are not updating now..."
+	else
+		echo_good "Updating code-review.sh"
+		update
+	fi
 fi
 
 
@@ -151,14 +169,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh update"
 			exit 1
 		fi
-		cd "$SCRIPTLOCATION" &&
-		git checkout master &&
-		git fetch --all &&
-		git reset --hard origin/master &&
-		record_checked_status "$SCRIPTLOCATION" 0 &&
-		dos2unix "$SCRIPTLOCATION/code-review.sh"
-		echo_good "Update complete!" &&
-		echo_norm "================" &&
+		update
 		exit 0
 		;;
 	'version' )
