@@ -133,11 +133,11 @@ if [[ $CODE -eq 0 ]]; then
 else
 	echo_bad "code-review.sh is out-of-date!"
 	read -r -p  "Do you wish to update now? [Y/n]" response
-	if [[ "$response" -ne "Y" ]]; then
-		echo_bad "You are not updating now..."
-	else
+	if [[ "$response" -ne "n" ]]; then
 		echo_good "Updating code-review.sh"
 		update
+	else
+		echo_bad "You are not updating now..."
 	fi
 fi
 
