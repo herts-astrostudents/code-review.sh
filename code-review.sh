@@ -156,6 +156,7 @@ case $1 in
 		git fetch --all &&
 		git reset --hard origin/master &&
 		record_checked_status "$SCRIPTLOCATION" 0 &&
+		dos2unix "$SCRIPTLOCATION/code-review.sh"
 		echo_good "Update complete!" &&
 		echo_norm "================" &&
 		exit 0
