@@ -122,7 +122,7 @@ update(){
 	record_checked_status "$SCRIPTLOCATION" 0 &&
 	dos2unix "$SCRIPTLOCATION/code-review.sh"
 	echo_good "Update complete!" &&
-	echo_norm "================" &&
+	echo_norm "================"
 }
 
 echo_norm "====<UPDATES>==="
