@@ -114,13 +114,31 @@ require_clean(){
 	fi
 }
 
+update(){
+	cd "$SCRIPTLOCATION" &&
+	git checkout master &&
+	git fetch --all &&
+	git reset --hard origin/master &&
+	record_checked_status "$SCRIPTLOCATION" 0 &&
+	dos2unix "$SCRIPTLOCATION/code-review.sh"
+	echo_good "Update complete!" &&
+	echo_norm "================"
+}
+
 echo_norm "====<UPDATES>==="
 check_for_changes "$SCRIPTLOCATION" origin master 12  # check every 12 hours
 CODE=$?
 if [[ $CODE -eq 0 ]]; then
 	echo_good "code-review.sh is up to date!"
 else
-	echo_bad "code-review.sh is out-of-date please run 'code-review.sh update'"
+	echo_bad "code-review.sh is out-of-date!"
+	read -r -p  "Do you wish to update now? [Y/n]" response
+	if [[ "$response" -ne "Y" ]]; then
+		echo_bad "You are not updating now..."
+	else
+		echo_good "Updating code-review.sh"
+		update
+	fi
 fi
 
 
@@ -151,13 +169,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh update"
 			exit 1
 		fi
-		cd "$SCRIPTLOCATION" &&
-		git checkout master &&
-		git fetch --all &&
-		git reset --hard origin/master &&
-		record_checked_status "$SCRIPTLOCATION" 0 &&
-		echo_good "Update complete!" &&
-		echo_norm "================" &&
+		update
 		exit 0
 		;;
 	'version' )
@@ -279,17 +291,19 @@ case $1 in
 	'view-solution' )
 		if [ $# -gt 3 ] || [ $# -lt 2 ]; then
 			echo_bad "incorrect usage"
-			echo_bad "USAGE: code-review.sh view-solution <USERNAME> [<BRANCH>=solutions]"
+			echo_bad "USAGE: code-review.sh view-solution <USERNAME> [solution-name]"
+			echo_bad "solution-name is optional e.g. 13 for Task-13"
 			exit 1
 		elif [[ $# -eq 3 ]]; then
 			USERNAME=$2
-			BRANCH=$3
+			BRANCH=$3-solution
 		elif [[ $# -eq 2 ]]; then
 			USERNAME=$2
 			BRANCH="solutions"
 		else
 			echo_bad "incorrect usage"
-			echo_bad "USAGE: code-review.sh view-solution <USERNAME> [<BRANCH>=solutions]"
+			echo_bad "USAGE: code-review.sh view-solution <USERNAME> [solution-name]"
+			echo_bad "solution-name is optional e.g. 13 for Task-13"
 			exit 1
 		fi
 		require_clean &&
@@ -313,6 +327,12 @@ case $1 in
 				exit 0
 			else
 				echo_bad "$USERNAME exists but the branch $USERNAME/$BRANCH does not."
+				other_branches="$(git branch -r  | grep -E "$USERNAME/[0-9]+-solution" | cut -f2 -d"/" | cut -f1 -d"-")"
+				if [[ $other_branches ]]; then
+					echo_norm "There are some other solutions for $USERNAME available for tasks:"
+					echo_norm "$other_branches"
+					echo_norm "You can access them like: code-review.sh view-solution $USERNAME $(echo $other_branches | head -n 1)"
+				fi
 				show_git remote remove "$USERNAME" &&
 				exit 1
 			fi
