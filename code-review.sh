@@ -357,6 +357,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh start-task <TASK-NAME>"
 			exit 1
 		fi
+		show_git checkout master &&
 		show_git checkout -b "$2-solution" &&  
 		if [[ -d  "Task $2" ]]; then
 			echo_good "Now on branch $2-solution, do your work in the Task $2 folder and then run code-review.sh finish-task to commit and upload" &&
