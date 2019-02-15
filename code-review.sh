@@ -29,7 +29,10 @@ echo_norm(){
 	echo -e "$Yellow$1$reset"
 }
 
-function show_git(){ echo_norm "$Blue >git $* $reset" && git $*; }
+function show_git(){ 
+	args=( "$@" )
+	echo_norm "$Blue >git ${args[@]} $reset" && git "${args[@]}"; 
+}
 
 remote_status(){
 	# exit codes: (0=up-to-date, 1|2=diverged, 3|4=error)
