@@ -1,6 +1,5 @@
 #! /bin/bash
 
-
 # Reset
 reset='\033[0m'       # Text Reset
 # Regular Colors
@@ -11,6 +10,7 @@ Blue='\033[0;34m'
 
 
 SCRIPTLOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPTLOCATION/bash-prexec.sh"
 
 check_internet(){ 
 	ping 8.8.8.8 -c 5 -W 1 &>/dev/null
@@ -29,20 +29,7 @@ echo_norm(){
 	echo -e "$Yellow$1$reset"
 }
 
-function requote() {
-    local res=""
-    for x in "${@}" ; do
-        # try to figure out if quoting was required for the $x:
-        grep -q "[[:space:]]" <<< "$x" && res="${res} '${x}'" || res="${res} ${x}"
-    done
-    # remove first space and print:
-    sed -e 's/^ //' <<< "${res}"
-}
-
-function show_git(){ 
-	echo_norm "$Blue> git $(requote "${@}")"  # for poeple to see
-	git $(requote "${@}")
-}
+preexec(){ if [[ "$1" == "git"* ]]; then echo -e "$Blue > $1$reset"; fi; }
 
 remote_status(){
 	# exit codes: (0=up-to-date, 1|2=diverged, 3|4=error)
@@ -251,15 +238,17 @@ pull_tasks(){
 	cd "$TOPLEVEL" &&
 	(rm ".last-checked" || echo "reset last-checked") &&
 	require_clean &&
-	show_git fetch upstream &&
-	show_git checkout master && 
-	show_git merge upstream/master &&
-	show_git push origin master &&
-	show_git checkout "$CURRENT_BRANCH" &&
+	git fetch upstream &&
+	git checkout master && 
+	git merge upstream/master &&
+	git push origin master &&
+	git checkout "$CURRENT_BRANCH" &&
 	record_checked_status "$TOPLEVEL" 0 &&
 	echo_good "Your local and remote repositories have been updated successfully!" &&
 	echo_norm "[run code-review.sh rebase-task <TASK-NAME> if you need to update a task in progress.]"
 }
+
+echo_norm "I will show what git commands I am using in $Blue blue $reset"
 
 case $1 in
 	'first-time-setup' )
@@ -268,7 +257,7 @@ case $1 in
 			echo_bad "USAGE: code-review.sh first-time-setup <UPSTREAM_ORGANISATION>"
 			exit 1
 		fi
-		show_git config push.default simple
+		git config push.default simple
 		UPSTREAM_ORGANISATION=$2
 		UPSTREAM="$PREFIX$UPSTREAM_ORGANISATION/$REPONAME.git"
 
@@ -281,19 +270,19 @@ case $1 in
 			echo_bad "  3. click the clone/download button and copy the address in the box (preferably clone with ssh instead of https)"
 			echo_bad "  4. Paste the link here"
 			read -r -p "> " response &&
-			show_git remote remove origin &&
-			show_git remote add origin "$response" &&
-			show_git checkout master && show_git pull &&
+			git remote remove origin &&
+			git remote add origin "$response" &&
+			git checkout master && git pull &&
 			echo_good "$response has been added and the mistake has been fixed!"
 		fi
 		
-		show_git remote add upstream "$UPSTREAM"
+		git remote add upstream "$UPSTREAM"
 		require_clean &&
-		(show_git checkout master &&
-		show_git fetch upstream && 
-		show_git merge upstream/master &&
-		(show_git branch solutions || echo "solutions branch already exists") &&
-		show_git checkout master &&
+		(git checkout master &&
+		git fetch upstream && 
+		git merge upstream/master &&
+		(git branch solutions || echo "solutions branch already exists") &&
+		git checkout master &&
 		record_checked_status "$TOPLEVEL" 0 &&
 		echo_good "Linked to upstream repository, created solutions branch." &&
 		echo_good "Now use code-review.sh start-task to start the latest task" &&
@@ -324,19 +313,19 @@ case $1 in
 		REMOTENAME="$HTTPS$USERNAME/$REPONAME.git"
 		if [[ "$ORIGINNAME" == "$REMOTENAME" ]]; then
 			echo_norm "That is your own fork. Checking out your solutions"
-			show_git checkout solutions && exit 0
+			git checkout solutions && exit 0
 		fi
 		echo_norm 'adding repository and checking out'
-		show_git remote add "$USERNAME" "$REMOTENAME" &>/dev/null
+		git remote add "$USERNAME" "$REMOTENAME" &>/dev/null
 		if [[ $? -eq 0 ]]; then
-			show_git fetch "$USERNAME" 
-			show_git checkout "$USERNAME/$BRANCH"
+			git fetch "$USERNAME" 
+			git checkout "$USERNAME/$BRANCH"
 			if [ $? -eq 0 ]; then
 				echo_good "Now on the $BRANCH branch of $USERNAME"
 				echo_norm "This is a temporary branch"
 				echo_norm "To return to a local branch use git checkout <name>. e.g. git checkout master"
 				echo_norm "If you have made any changes you'll need to use git checkout -- ." 
-				show_git remote remove "$USERNAME" &&
+				git remote remove "$USERNAME" &&
 				exit 0
 			else
 				echo_bad "$USERNAME exists but the branch $USERNAME/$BRANCH does not."
@@ -346,12 +335,12 @@ case $1 in
 					echo_norm "$other_branches"
 					echo_norm "You can access them like: code-review.sh view-solution $USERNAME $(echo $other_branches | head -n 1)"
 				fi
-				show_git remote remove "$USERNAME" &&
+				git remote remove "$USERNAME" &&
 				exit 1
 			fi
 		else
 			echo_bad "$USERNAME does not exist!" &&
-			show_git remote remove "$USERNAME" &&
+			git remote remove "$USERNAME" &&
 			exit 1
 		fi
 		;;
@@ -370,15 +359,15 @@ case $1 in
 			echo_bad "USAGE: code-review.sh start-task <TASK-NAME>"
 			exit 1
 		fi
-		show_git checkout master &&
-		show_git checkout -b "$2-solution" &&  
+		git checkout master &&
+		git checkout -b "$2-solution" &&  
 		if [[ -d  "Task $2" ]]; then
 			echo_good "Now on branch $2-solution, do your work in the Task $2 folder and then run code-review.sh finish-task to commit and upload" &&
 			exit 0
 		else
 			echo_bad "Task $2 folder does not exist" && 
-			show_git checkout "$CURRENT_BRANCH" &&
-			show_git branch -D "$2-solution" && 
+			git checkout "$CURRENT_BRANCH" &&
+			git branch -D "$2-solution" && 
 			echo_norm "Deleted redundant branch $2-solution" &&
 			echo_bad "There does not seem to be a task folder for Task $2. To pull the new tasks: code-review.sh pull-tasks" &&
 			exit 1
@@ -393,16 +382,16 @@ case $1 in
 		read -p "Submit finished task $2? [enter]"
 		require_clean &&
 		cd "$TOPLEVEL" &&
-		show_git checkout solutions
+		git checkout solutions
 		if [[ $? -ne 0 ]]; then
 			echo_norm "Creating branch 'solutions' from master"
 			echo_bad "This probably means that first-time-setup was not run"
-			show_git checkout master &&
-			show_git checkout -b solutions
+			git checkout master &&
+			git checkout -b solutions
 		fi
-		show_git merge "$2-solution" -m "finish $2-solution" &&
-		show_git push --set-upstream origin solutions &&
-		show_git fetch upstream &&
+		git merge "$2-solution" -m "finish $2-solution" &&
+		git push --set-upstream origin solutions &&
+		git fetch upstream &&
 		if grep -q "upstream/solutions-$GITHUB_USERNAME"'$' <<<"$(git branch -r)"; then
 			PRBRANCH="solutions-$GITHUB_USERNAME"
 		else
@@ -421,8 +410,8 @@ case $1 in
 		read -p "This will pull any changes from the remote repository and merge them with your current work on Task $2. Continue? [enter]"
 		require_clean &&
 		cd "$TOPLEVEL" &&
-		show_git checkout "$2-solution" &&
-		show_git merge master
+		git checkout "$2-solution" &&
+		git merge master
 		if [[ $? -ne 0 ]]; then
 			echo_bad "rebase failed..."
 			echo_bad "The maintainer is really sorry about that! :("
@@ -442,7 +431,7 @@ case $1 in
 			echo_norm "Good luck!"
 			exit 0
 		fi
-		show_git checkout "$CURRENT_BRANCH" &&
+		git checkout "$CURRENT_BRANCH" &&
 		echo_good "Rebase succeeded, continue as you were. You may notice some changes from upstream!" &&
 		exit 0
 		;;
@@ -457,12 +446,12 @@ case $1 in
 				require_clean &&
 				echo_norm "We will now develop the new task-$3 by branching from the development branch (where all experiments/works in progress should branch from)" &&
 				echo_norm "The master branch should be kept working" &&
-				show_git checkout master &&
-				show_git branch "task-$3/finalised/task" &&
-				show_git checkout master &&
-				show_git branch "task-$3/finalised/solution" &&
-				show_git checkout master &&
-				show_git checkout -b "task-$3/develop" &&
+				git checkout master &&
+				git branch "task-$3/finalised/task" &&
+				git checkout master &&
+				git branch "task-$3/finalised/solution" &&
+				git checkout master &&
+				git checkout -b "task-$3/develop" &&
 				cd "$TOPLEVEL" && mkdir "Task $3" &&
 				echo_good "Success!" &&
 				echo_norm "Summary" &&
@@ -481,9 +470,9 @@ case $1 in
 				fi
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				show_git checkout "task-$3/develop" &&
-				show_git branch "task-$3/solution" &&
-				show_git checkout -b "task-$3/task" &&
+				git checkout "task-$3/develop" &&
+				git branch "task-$3/solution" &&
+				git checkout -b "task-$3/task" &&
 				echo_good "Success!" &&
 				echo_norm "Summary" &&
 				echo_norm "=======" &&
@@ -506,22 +495,22 @@ case $1 in
 				fi
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				show_git checkout "task-$3/finalised/task" && 
-				show_git merge --squash "task-$3/task" -m "merged task" --strategy-option theirs
+				git checkout "task-$3/finalised/task" && 
+				git merge --squash "task-$3/task" -m "merged task" --strategy-option theirs
 				if grep -q "conflict" <<<"$(git diff --check)"; then
 					echo_bad "I'm afraid that there have been some conflicts. Please fix them before running end-finalise-task again!"
 					exit 0
 				fi
-				show_git add --all && show_git commit -m "merged task" &&
-				show_git checkout "task-$3/finalised/solution" &&
-				show_git merge "task-$3/solution" -m "merged solution" --strategy-option theirs
+				git add --all && git commit -m "merged task" &&
+				git checkout "task-$3/finalised/solution" &&
+				git merge "task-$3/solution" -m "merged solution" --strategy-option theirs
 				if grep -q "conflict" <<<"$(git diff --check)"; then
 					echo_bad "I'm afraid that there have been some conflicts. Please fix them before running end-finalise-task again!"
 					exit 0
 				fi
-				show_git branch -D "task-$3/task" &&	
-				show_git branch -D "task-$3/solution" &&
-				show_git checkout master &&
+				git branch -D "task-$3/task" &&	
+				git branch -D "task-$3/solution" &&
+				git checkout master &&
 				echo_good "Success!"
 				echo_norm "Summary" &&
 				echo_norm "=======" &&
@@ -543,7 +532,7 @@ case $1 in
 				read -p "This will publish your task-$3 TASK (with no solution) to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				show_git push --set-upstream origin "task-$3/finalised/task" --force &&
+				git push --set-upstream origin "task-$3/finalised/task" --force &&
 				echo_good "Success! Your task-$3 has been pushed to github" &&
 				echo_norm "Now go to $GITHUB_UPSTREAM/compare/master...$GITHUB_USERNAME:task-$3/finalised/task?expand=1 to open a pull request" &&
 				echo_norm "Use code-review.sh develop publish-solutions to publish the SOLUTIONS" &&
@@ -558,7 +547,7 @@ case $1 in
 				read -p "This will publish your task-$3 SOLUTION to github. Continue? [enter]"
 				require_clean &&
 				cd "$TOPLEVEL" &&
-				show_git push --set-upstream origin "task-$3/finalised/solution" --force &&
+				git push --set-upstream origin "task-$3/finalised/solution" --force &&
 				echo_good "Success! Your solution to task-$3 has been pushed to github" &&
 				echo_norm "Now go to $GITHUB_UPSTREAM/compare/solutions-$GITHUB_USERNAME...$GITHUB_USERNAME:task-$3/finalised/solution?expand=1 to open a pull request" &&
 				exit 0
@@ -572,16 +561,16 @@ case $1 in
 				require_clean &&
 				echo_norm "Warning: reopening and then publishing a task may result in other people losing data if you have already published it!"
 				read -p "This will repoen edits on task $3 and its solution. Continue? [enter]"
-				(show_git checkout "task-$3/develop" || (echo_bad "task-$3 has not been created yet" && exit 1) ) &&
+				(git checkout "task-$3/develop" || (echo_bad "task-$3 has not been created yet" && exit 1) ) &&
 				echo_norm "Deleting bad branches" &&
-				show_git branch -D "task-$3/finalised/task"
-				show_git branch -D "task-$3/finalised/solution"
-				show_git branch -D "task-$3/task"
-				show_git branch -D "task-$3/solution"
-				show_git checkout master &&
-				show_git branch "task-$3/finalised/task" &&
-				show_git branch "task-$3/finalised/solution" &&
-				show_git checkout "task-$3/develop" &&
+				git branch -D "task-$3/finalised/task"
+				git branch -D "task-$3/finalised/solution"
+				git branch -D "task-$3/task"
+				git branch -D "task-$3/solution"
+				git checkout master &&
+				git branch "task-$3/finalised/task" &&
+				git branch "task-$3/finalised/solution" &&
+				git checkout "task-$3/develop" &&
 				echo_good "task-$3 has been reopened for editing again" &&
 				echo_norm "Summary" &&
 				echo_norm "=======" &&
