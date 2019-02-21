@@ -29,7 +29,20 @@ echo_norm(){
 	echo -e "$Yellow$1$reset"
 }
 
-function show_git(){ echo_norm "$Blue >git $* $reset" && git $*; }
+function requote() {
+    local res=""
+    for x in "${@}" ; do
+        # try to figure out if quoting was required for the $x:
+        grep -q "[[:space:]]" <<< "$x" && res="${res} '${x}'" || res="${res} ${x}"
+    done
+    # remove first space and print:
+    sed -e 's/^ //' <<< "${res}"
+}
+
+function show_git(){ 
+	echo_norm "$Blue> git $(requote "${@}")"  # for poeple to see
+	git $(requote "${@}")
+}
 
 remote_status(){
 	# exit codes: (0=up-to-date, 1|2=diverged, 3|4=error)
@@ -270,7 +283,7 @@ case $1 in
 			read -r -p "> " response &&
 			show_git remote remove origin &&
 			show_git remote add origin "$response" &&
-			show_git checkout master && git pull &&
+			show_git checkout master && show_git pull &&
 			echo_good "$response has been added and the mistake has been fixed!"
 		fi
 		
